@@ -63,7 +63,7 @@ def place_player_and_goals(map_data, num_goals):
     temp_pos = list(free_spaces.pop())
     player_pos[0] = temp_pos[0]
     player_pos[1] = temp_pos[1]
-    map_data[player_pos[0]][player_pos[1]] = PLAYER
+    #map_data[player_pos[0]][player_pos[1]] = PLAYER
 
     # 목표 지점 선정
     goals = []
@@ -72,6 +72,40 @@ def place_player_and_goals(map_data, num_goals):
         map_data[goal_pos[0]][goal_pos[1]] = GOAL
         goals.append(goal_pos)
     return player_pos, goals
+
+##추가 기능##
+#대상 위치와 벽과의 거리가 distance이상인지 확인
+def is_near_to_wall(y, x, map_data):
+    distance = 3
+    near_positions = []
+    width = len(map_data[0])
+    height = len(map_data)
+    for i in range(distance):
+        for j in range(i+1):
+            if x+j <= width-1:
+                if y+(i-j) <=height-1:
+                    near_positions.append((y+(i-j),x+j))
+                if y-(i-j) >= 0:
+                    near_positions.append((y-(i-j),x+j))
+            if x-j >= 0:
+                if y+(i-j) <= height-1:
+                    near_positions.append((y+(i-j),x-j))
+                if y-(i-j) >= 0:
+                    near_positions.append((y-(i-j),x-j))
+
+    return any(map_data[ny][nx] == WALL for ny, nx in near_positions)
+        
+#일정 거리 이상의 공간을 확보한 곳에 벽 생성
+def place_wall(map_data):
+    free_spaces = [(y,x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR and not is_near_to_wall(y, x, map_data)]
+    random.shuffle(free_spaces)
+    
+    wall_pos = free_spaces.pop()
+    map_data[wall_pos[0]][wall_pos[1]] = WALL
+
+    return map_data
+
+#############
 
 #대상 위치가 벽에 붙어있는지 확인
 def is_adjacent_to_wall(y, x, map_data):
@@ -99,6 +133,11 @@ def generate_sokoban_map(width, height, num_goals):
     while True:
         map_data = create_empty_map(width, height)
         player_pos, goals = place_player_and_goals(map_data, num_goals)
+        
+        #추가 기능 1 : 벽생성
+        for i in range(3):
+            map_data = place_wall(map_data)
+
         map_data = place_boxes(map_data, goals)
         return map_data, player_pos
 
