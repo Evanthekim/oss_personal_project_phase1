@@ -100,8 +100,9 @@ def place_wall(map_data):
     free_spaces = [(y,x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR and not is_near_to_wall(y, x, map_data)]
     random.shuffle(free_spaces)
     
-    wall_pos = free_spaces.pop()
-    map_data[wall_pos[0]][wall_pos[1]] = WALL
+    if len(free_spaces)>0:
+        wall_pos = free_spaces.pop()
+        map_data[wall_pos[0]][wall_pos[1]] = WALL
 
     return map_data
 
@@ -135,7 +136,7 @@ def generate_sokoban_map(width, height, num_goals):
         player_pos, goals = place_player_and_goals(map_data, num_goals)
         
         #추가 기능 1 : 벽생성
-        for i in range(3):
+        for i in range(10):
             map_data = place_wall(map_data)
 
         map_data = place_boxes(map_data, goals)
