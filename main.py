@@ -206,7 +206,7 @@ def move_player(dx, dy):
         player_pos[1] = new_y
         
         #move 저장
-        move.append((dx,dy))
+        move.append(((dx,dy),False))
 
         level[player_pos[1]][player_pos[0]] = "@"
     elif level[new_y][new_x] == '$':
@@ -219,7 +219,7 @@ def move_player(dx, dy):
             player_pos[1] = new_y
             
             #move 저장
-            move.append((dx,dy))
+            move.append(((dx,dy),True))
 
             level[player_pos[1]][player_pos[0]] = "@"
             # 상자 이동
@@ -239,20 +239,22 @@ def cancel_move():
     if len(move) > 0:
         last_move = move.pop()
         
-        box_pos_x = player_pos[0] + last_move[0]
-        box_pos_y = player_pos[1] + last_move[1]
+        box_pos_x = player_pos[0] + last_move[0][0]
+        box_pos_y = player_pos[1] + last_move[0][1]
+        with_box = last_move[1]
 
-        if level[box_pos_y][box_pos_x] == '$':
-            level[box_pos_y][box_pos_x] = " "
-            level[player_pos[1]][player_pos[0]] = '$'
-        elif level[box_pos_y][box_pos_x] == '*':
-            level[box_pos_y][box_pos_x] = '.'
-            level[player_pos[1]][player_pos[0]] = '$'
+        if with_box:
+            if level[box_pos_y][box_pos_x] == '$':
+                level[box_pos_y][box_pos_x] = " "
+                level[player_pos[1]][player_pos[0]] = '$'
+            elif level[box_pos_y][box_pos_x] == '*':
+                level[box_pos_y][box_pos_x] = '.'
+                level[player_pos[1]][player_pos[0]] = '$'
         else:
             level[player_pos[1]][player_pos[0]] = " "
 
-        player_pos[0] = player_pos[0] - last_move[0]
-        player_pos[1] = player_pos[1] - last_move[1]
+        player_pos[0] = player_pos[0] - last_move[0][0]
+        player_pos[1] = player_pos[1] - last_move[0][1]
         level[player_pos[1]][player_pos[0]] = "@"
 
 ###############
