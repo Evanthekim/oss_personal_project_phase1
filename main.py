@@ -238,7 +238,19 @@ def cancel_move():
 
     if len(move) > 0:
         last_move = move.pop()
-        level[player_pos[1]][player_pos[0]] = " "
+        
+        box_pos_x = player_pos[0] + last_move[0]
+        box_pos_y = player_pos[1] + last_move[1]
+
+        if level[box_pos_y][box_pos_x] == '$':
+            level[box_pos_y][box_pos_x] = " "
+            level[player_pos[1]][player_pos[0]] = '$'
+        elif level[box_pos_y][box_pos_x] == '*':
+            level[box_pos_y][box_pos_x] = '.'
+            level[player_pos[1]][player_pos[0]] = '$'
+        else:
+            level[player_pos[1]][player_pos[0]] = " "
+
         player_pos[0] = player_pos[0] - last_move[0]
         player_pos[1] = player_pos[1] - last_move[1]
         level[player_pos[1]][player_pos[0]] = "@"
