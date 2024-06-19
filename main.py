@@ -22,6 +22,7 @@ box_image = pygame.image.load('./assets/box.png')
 goal_image = pygame.image.load('./assets/goal.png')
 floor_image = pygame.image.load('./assets/floor.png')
 box_on_goal_image = pygame.image.load('./assets/box_with_x.png')
+blue_image = pygame.image.load('./assets/player.png')
 
 # 타일 크기 설정
 tile_size = 100
@@ -270,6 +271,9 @@ def run():
                     elif event.key == pygame.K_RIGHT:
                         move_player(1, 0)
                         is_win()
+        if game_state == STATE_GAME:
+            move_blue()
+            check_game_over()
 
         screen.fill(WHITE)
         if game_state == STATE_MENU:
@@ -279,6 +283,7 @@ def run():
         elif game_state == STATE_GAME:
             draw_level(level)
             draw_player()
+            draw_blue()
             pygame.display.flip()
 
     pygame.quit()
