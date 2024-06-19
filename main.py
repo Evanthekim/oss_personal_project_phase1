@@ -48,6 +48,7 @@ game_state = STATE_MENU
 level = []
 player_pos = [0, 0]
 goal_count = 0
+blue_pos = [0, 0]
 
 #비어있는 맵을 생성
 def create_empty_map(width, height):
@@ -199,6 +200,15 @@ def show_controls():
     for line in range(len(label)):
         screen.blit(label[line],(position[0],position[1]+(line*50)+(15*line)))
     pygame.display.flip()
+
+# 장애물 초기 위치 설정
+def place_blue(map_data):
+    global blue_pos
+    free_spaces = [(y, x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR]
+    random.shuffle(free_spaces)
+    blue_pos = list(free_spaces.pop())
+    map_data[blue_pos[0]][blue_pos[1]] = FLOOR  # 장애물 위치는 비어 있어야 합니다.
+    return blue_pos
 
 # 메인 루프
 def run():
