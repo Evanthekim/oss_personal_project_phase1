@@ -223,6 +223,18 @@ def move_blue():
             blue_pos = [new_y, new_x]
             break
 
+def draw_blue():
+    screen.blit(blue_image, (blue_pos[1] * tile_size, blue_pos[0] * tile_size))
+
+def check_game_over():
+    if blue_pos == player_pos:
+        font = pygame.font.SysFont(None, 100)
+        text = font.render("GAME OVER", True, (255, 0, 0))
+        screen.blit(text, (screen_width // 2 - 200, screen_height // 2 - 50))
+        pygame.display.flip()
+        pygame.time.wait(2000)  # 2초간 대기
+        reset_game()
+
 
 # 메인 루프
 def run():
