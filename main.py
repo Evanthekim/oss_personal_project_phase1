@@ -51,7 +51,17 @@ goal_count = 0
 
 #비어있는 맵을 생성
 def create_empty_map(width, height):
-    return [[WALL if x == 0 or x == width - 1 or y == 0 or y == height - 1 else FLOOR for x in range(width)] for y in range(height)]
+    map_data = [[WALL if x == 0 or x == width - 1 or y == 0 or y == height - 1 else FLOOR for x in range(width)] for y in range(height)]
+
+    # 내부에 벽을 추가
+    free_spaces = [(y, x) for y in range(1, height - 1) for x in range(1, width - 1)]
+    random.shuffle(free_spaces)
+
+    for _ in range(3):  
+        wall_pos = free_spaces.pop()
+        map_data[wall_pos[0]][wall_pos[1]] = WALL
+
+    return map_data
 
 #비어있는 맵에 플레이어와 구멍을 배치
 def place_player_and_goals(map_data, num_goals):
