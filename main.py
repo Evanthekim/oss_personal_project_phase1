@@ -176,6 +176,7 @@ def is_win():
 def reset_game():
     global level, player_pos
     level, player_pos = generate_sokoban_map(10, 10, 3)
+    place_blue(level)
 
 #시작 메뉴를 표시
 def show_menu():
@@ -209,6 +210,19 @@ def place_blue(map_data):
     blue_pos = list(free_spaces.pop())
     map_data[blue_pos[0]][blue_pos[1]] = FLOOR  # 장애물 위치는 비어 있어야 합니다.
     return blue_pos
+
+# 장애물 움직임 정의
+def move_blue():
+    global blue_pos, player_pos
+    # 간단한 랜덤 이동 예시, 벽을 넘지 않는 로직 추가
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    random.shuffle(directions)
+    for dy, dx in directions:
+        new_y, new_x = blue_pos[0] + dy, blue_pos[1] + dx
+        if level[new_y][new_x] in [FLOOR, PLAYER]:
+            blue_pos = [new_y, new_x]
+            break
+
 
 # 메인 루프
 def run():
