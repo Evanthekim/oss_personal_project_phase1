@@ -50,6 +50,8 @@ level = []
 player_pos = [0, 0]
 goal_count = 0
 blue_pos = [0, 0]
+blue_move_timer = 0  # 장애물 움직임 타이머
+blue_move_interval = 500  # 장애물이 움직이는 간격 (밀리초 단위)
 
 #비어있는 맵을 생성
 def create_empty_map(width, height):
@@ -161,6 +163,7 @@ def move_player(dx, dy):
             elif level[box_new_y][box_new_x] == ".":
                 level[box_new_y][box_new_x] = '*'
                 goal_count -= 1
+    check_game_over()  # 이동 후 게임 종료 확인
 
 #플레이어가 이겼는지 판단함
 def is_win():
@@ -214,21 +217,23 @@ def place_blue(map_data):
 
 # 장애물 움직임 정의
 def move_blue():
-    global blue_pos, player_pos
-    # 간단한 랜덤 이동 예시, 벽을 넘지 않는 로직 추가
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    random.shuffle(directions)
-    for dy, dx in directions:
-        new_y, new_x = blue_pos[0] + dy, blue_pos[1] + dx
-        if level[new_y][new_x] in [FLOOR, PLAYER]:
-            blue_pos = [new_y, new_x]
-            break
+    global blue_pos, player_pos, blue_move_timer
+    current_time = pygame.time.get_ticks()
+    if current_time - blue_move_timer > blue_move_interval:
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        random.shuffle(directions)
+        for dy, dx in directions:
+            new_y, new_x = blue_pos[0] + dy, blue_pos[1] + dx
+            if level[new_x][new_y] in [FLOOR, PLAYER]:
+                blue_pos = [new_y, new_x]
+                break
+        blue_move_timer = current_time  # 타이머 갱신
 
 def draw_blue():
     screen.blit(blue_image, (blue_pos[1] * tile_size, blue_pos[0] * tile_size))
 
 def check_game_over():
-    if blue_pos == player_pos:
+    if blue_pos[0] == player_pos[1] and blue_pos[1] == player_pos[0]:
         font = pygame.font.SysFont(None, 100)
         text = font.render("GAME OVER", True, (255, 0, 0))
         screen.blit(text, (screen_width // 2 - 200, screen_height // 2 - 50))
@@ -250,6 +255,7 @@ def run():
                 if game_state == STATE_MENU:
                     if event.key == pygame.K_RETURN:  # Enter 키를 눌러 게임 시작
                         level, player_pos = generate_sokoban_map(10, 10, 3)
+                        place_blue(level)
                         game_state = STATE_GAME
                     elif event.key == pygame.K_h:  # H 키를 눌러 조작법 안내
                         game_state = STATE_CONTROLS
