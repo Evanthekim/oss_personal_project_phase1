@@ -50,23 +50,6 @@ level = []
 player_pos = [0, 0]
 goal_count = 0
 undo_stack = deque()  # 추가
-moving_obstacles = []  # 추가2
-
-class MovingObstacle:  # 추가2
-    def __init__(self, pos):
-        self.pos = pos
-        self.direction = random.choice(DIRS)
-        self.move_timer = 0
-
-    def move(self, map_data, dt):
-        self.move_timer += dt
-        if self.move_timer >= 1000:  # 1초마다 이동
-            next_pos = (self.pos[0] + self.direction[0], self.pos[1] + self.direction[1])
-            if map_data[next_pos[1]][next_pos[0]] == FLOOR:
-                self.pos = next_pos
-            else:
-                self.direction = random.choice(DIRS)
-            self.move_timer = 0
 
 # 비어있는 맵을 생성
 def create_empty_map(width, height):
@@ -114,7 +97,6 @@ def place_boxes(map_data, goals):
 
 # 무작위 장애물 추가
 def place_obstacles(map_data, num_obstacles):  # 추가2
-    global moving_obstacles  # 추가2
     free_spaces = [(y, x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR]
     random.shuffle(free_spaces)
 
@@ -122,7 +104,7 @@ def place_obstacles(map_data, num_obstacles):  # 추가2
         if not free_spaces:
             break
         obstacle_pos = free_spaces.pop()
-        moving_obstacles.append(MovingObstacle(obstacle_pos))  # 추가2
+        map_data[obstacle_pos[0]][obstacle_pos[1]] = OBSTACLE
     
     return map_data
 
@@ -149,11 +131,8 @@ def draw_level(map_data):
                 screen.blit(box_image, (x * tile_size, y * tile_size))
             elif tile == BOX_ON_GOAL:
                 screen.blit(box_on_goal_image, (x * tile_size, y * tile_size))
-
-# 장애물 그리기 추가2
-def draw_obstacles():
-    for obstacle in moving_obstacles:
-        screen.blit(wall_image, (obstacle.pos[0] * tile_size, obstacle.pos[1] * tile_size))
+            elif tile == OBSTACLE:  # 추가2
+                screen.blit(wall_image, (x * tile_size, y * tile_size))
 
 # 화면에 플레이어를 표시함
 def draw_player():
@@ -167,10 +146,6 @@ def move_player(dx, dy):
     
     new_x = player_pos[0] + dx
     new_y = player_pos[1] + dy
-
-    # 장애물이 있는지 확인
-    if any(obstacle.pos == (new_x, new_y) for obstacle in moving_obstacles):
-        return  # 이동 불가
 
     if level[new_y][new_x] in " $":  # 이동 가능 여부 확인
         # 이전 상태 저장
@@ -223,7 +198,7 @@ def is_win():
 # 새로운 맵을 생성하여 게임 리셋
 def reset_game():
     global level, player_pos, undo_stack  # 추가
-    level, player_pos = generate_sokoban_map(10, 10, 3, 5)  # 추가2
+    level, player_pos = generate_sokoban_map(10, 10, 3)
     undo_stack.clear()  # 추가
 
 # 시작 메뉴를 표시
@@ -254,10 +229,8 @@ def show_controls():
 def run():
     global level
     global game_state
-    clock = pygame.time.Clock()  # 추가2
     running = True
     while running:
-        dt = clock.tick(30)  # 프레임 속도 조절 추가2
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -295,15 +268,11 @@ def run():
         elif game_state == STATE_CONTROLS:
             show_controls()
         elif game_state == STATE_GAME:
-            for obstacle in moving_obstacles:  # 추가2
-                obstacle.move(level, dt)  # 추가2
             draw_level(level)
-            draw_obstacles()  # 추가2
             draw_player()
             pygame.display.flip()
 
     pygame.quit()
     sys.exit()
-
 if __name__ == "__main__":
     run()
