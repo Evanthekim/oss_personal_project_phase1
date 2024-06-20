@@ -10,14 +10,16 @@ pygame.init()
 screen_width = 1000
 screen_height = 1000
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Sokoban Multiplayer")
+pygame.display.set_caption("Sokoban")
 
 # 색상 설정
 WHITE = (255, 255, 255)
 
 # 이미지 로드
+#################PHASE2#################
 player1_image = pygame.image.load('./assets/player1.png')
 player2_image = pygame.image.load('./assets/player2.png')
+#################PHASE2#################
 wall_image = pygame.image.load('./assets/wall.png')
 box_image = pygame.image.load('./assets/box.png')
 goal_image = pygame.image.load('./assets/goal.png')
@@ -30,14 +32,18 @@ tile_size = 100
 # 맵 타일 종류
 WALL = '#'
 FLOOR = ' '
+#################PHASE2#################
 PLAYER1 = '1'
 PLAYER2 = '2'
+#################PHASE2#################
 BOX = '$'
 GOAL = '.'
 BOX_ON_GOAL = '*'
+#################PHASE2#################
 PLAYER1_ON_GOAL = '+'
 PLAYER2_ON_GOAL = '&'
 OBSTACLE = 'O'
+#################PHASE2#################
 
 # 방향 벡터
 DIRS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -50,12 +56,15 @@ game_state = STATE_MENU
 
 # 맵 데이터
 level = []
+#################PHASE2#################
 player1_pos = [0, 0]
 player2_pos = [0, 0]
+#################PHASE2#################
 goal_count = 0
 undo_stack = deque()
 moving_obstacles = []
 
+#################PHASE2#################
 class MovingObstacle:
     def __init__(self, pos):
         self.pos = pos
@@ -71,15 +80,19 @@ class MovingObstacle:
             else:
                 self.direction = random.choice(DIRS)
             self.move_timer = 0
+#################PHASE2#################
 
+#비어있는 맵을 생성
 def create_empty_map(width, height):
     return [[WALL if x == 0 or x == width - 1 or y == 0 or y == height - 1 else FLOOR for x in range(width)] for y in range(height)]
 
+#비어있는 맵에 플레이어와 구멍을 배치
 def place_players_and_goals(map_data, num_goals):
     global player1_pos, player2_pos
     free_spaces = [(y, x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR]
     random.shuffle(free_spaces)
 
+#################PHASE2#################
     temp_pos1 = list(free_spaces.pop())
     player1_pos[0] = temp_pos1[0]
     player1_pos[1] = temp_pos1[1]
@@ -89,18 +102,25 @@ def place_players_and_goals(map_data, num_goals):
     player2_pos[0] = temp_pos2[0]
     player2_pos[1] = temp_pos2[1]
     map_data[player2_pos[0]][player2_pos[1]] = PLAYER2
+#################PHASE2#################
 
+    #목표 지점 선정
     goals = []
     for _ in range(num_goals):
         goal_pos = free_spaces.pop()
         map_data[goal_pos[0]][goal_pos[1]] = GOAL
         goals.append(goal_pos)
+        #################PHASE2#################
     return player1_pos, player2_pos, goals
-
+        #################PHASE2#################
+        
+#대상 위치가 벽에 붙어있는지 확인
 def is_adjacent_to_wall(y, x, map_data):
     adjacent_positions = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)]
     return any(map_data[ny][nx] == WALL for ny, nx in adjacent_positions)
 
+
+#벽에 붙어있지 않은 빈 공간에 상자를 위치
 def place_boxes(map_data, goals):
     global goal_count
     free_spaces = [(y, x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR and not is_adjacent_to_wall(y, x, map_data)]
@@ -113,6 +133,7 @@ def place_boxes(map_data, goals):
 
     return map_data
 
+#################PHASE2#################
 def place_obstacles(map_data, num_obstacles):
     global moving_obstacles
     free_spaces = [(y, x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR]
@@ -126,7 +147,10 @@ def place_obstacles(map_data, num_obstacles):
     
     return map_data
 
+
+#맵을 자동으로 생성함
 def generate_sokoban_map(width, height, num_goals, num_obstacles=5):
+    #################PHASE2#################
     global player1_pos, player2_pos
     while True:
         map_data = create_empty_map(width, height)
@@ -134,7 +158,9 @@ def generate_sokoban_map(width, height, num_goals, num_obstacles=5):
         map_data = place_boxes(map_data, goals)
         map_data = place_obstacles(map_data, num_obstacles)
         return map_data, player1_pos, player2_pos
+#################PHASE2#################
 
+#화면에 레벨을 표시함
 def draw_level(map_data):
     for y, row in enumerate(map_data):
         for x, tile in enumerate(row):
@@ -147,15 +173,19 @@ def draw_level(map_data):
                 screen.blit(box_image, (x * tile_size, y * tile_size))
             elif tile == BOX_ON_GOAL:
                 screen.blit(box_on_goal_image, (x * tile_size, y * tile_size))
-
+                
+#################PHASE2#################                
+#화면에 장애물을 표시함
 def draw_obstacles():
     for obstacle in moving_obstacles:
         screen.blit(wall_image, (obstacle.pos[0] * tile_size, obstacle.pos[1] * tile_size))
 
+#화면에 플레이어를 표시함
 def draw_players():
     screen.blit(player1_image, (player1_pos[0] * tile_size, player1_pos[1] * tile_size))
     screen.blit(player2_image, (player2_pos[0] * tile_size, player2_pos[1] * tile_size))
 
+#플레이어의 이동을 정의
 def move_player(player, dx, dy):
     global level
     global goal_count
@@ -180,6 +210,7 @@ def move_player(player, dx, dy):
 
         if level[new_y][new_x] == " ":
             level[current_pos[1]][current_pos[0]] = " "
+            # player가 있던 자리 공백으로 변환
             current_pos[0] = new_x
             current_pos[1] = new_y
             level[current_pos[1]][current_pos[0]] = player_char
@@ -197,7 +228,8 @@ def move_player(player, dx, dy):
                 elif level[box_new_y][box_new_x] == ".":
                     level[box_new_y][box_new_x] = '*'
                     goal_count -= 1
-
+                    
+#뒤로가기 함수
 def undo_move():
     global player1_pos, player2_pos
     global level
@@ -206,7 +238,9 @@ def undo_move():
 
     if undo_stack:
         player1_pos, player2_pos, level, goal_count = undo_stack.pop()
+#################PHASE2#################
 
+#플레이어가 이겼는지 판단함
 def is_win():
     global goal_count
     if goal_count == 0:
@@ -214,14 +248,17 @@ def is_win():
         text = font.render("YOU WIN!", True, (255, 0, 0))
         screen.blit(text, (screen_width // 2 - 200, screen_height // 2 - 50))
         pygame.display.flip()
-        pygame.time.wait(2000)
-        reset_game()
+        pygame.time.wait(2000) # 2초간 대기
+        reset_game() # 게임 초기화 함수 호출
 
+#새로운 맵을 생성하여 게임 리셋
 def reset_game():
     global level, player1_pos, player2_pos, undo_stack
     level, player1_pos, player2_pos = generate_sokoban_map(10, 10, 3, 5)
+    #################PHASE2#################
     undo_stack.clear()
 
+#시작 메뉴를 표시
 def show_menu():
     font = pygame.font.SysFont(None, 50)
     text = ["Press Enter To Start Game", "To See How To Play, Press H"]
@@ -233,6 +270,7 @@ def show_menu():
         screen.blit(label[line], (position[0], position[1] + (line * 50) + (15 * line)))
     pygame.display.flip()
 
+#조작 방법등을 표시
 def show_controls():
     font = pygame.font.SysFont(None, 32)
     text = ["                                                              Sokoban Rules", "1. Objective: Push all the boxes into the holes.", "2. How to play: You can move player character using arrow keys.", "3. Winning Condition: Fill all the holes with boxes to win.", "4. New Map: A new map will be generated automatically a few seconds after you win.", "                                              To return to main menu, Press 'Esc'"]
@@ -244,6 +282,8 @@ def show_controls():
         screen.blit(label[line], (position[0], position[1] + (line * 50) + (15 * line)))
     pygame.display.flip()
 
+#################PHASE2#################
+#기존 코드에 생성한 함수 반영
 def run():
     global level
     global game_state
@@ -309,6 +349,7 @@ def run():
 
     pygame.quit()
     sys.exit()
+#################PHASE2#################
 
 if __name__ == "__main__":
     run()
