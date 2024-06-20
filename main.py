@@ -48,12 +48,13 @@ game_state = STATE_MENU
 level = []
 player_pos = [0, 0]
 goal_count = 0
+undo_stack = deque()  # 추가
 
-#비어있는 맵을 생성
+# 비어있는 맵을 생성
 def create_empty_map(width, height):
     return [[WALL if x == 0 or x == width - 1 or y == 0 or y == height - 1 else FLOOR for x in range(width)] for y in range(height)]
 
-#비어있는 맵에 플레이어와 구멍을 배치
+# 비어있는 맵에 플레이어와 구멍을 배치
 def place_player_and_goals(map_data, num_goals):
     global player_pos
     free_spaces = [(y, x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR]
@@ -73,13 +74,13 @@ def place_player_and_goals(map_data, num_goals):
         goals.append(goal_pos)
     return player_pos, goals
 
-#대상 위치가 벽에 붙어있는지 확인
+# 대상 위치가 벽에 붙어있는지 확인
 def is_adjacent_to_wall(y, x, map_data):
     """Check if the position (y, x) is adjacent to a wall."""
     adjacent_positions = [(y-1, x), (y+1, x), (y, x-1), (y, x+1)]
     return any(map_data[ny][nx] == WALL for ny, nx in adjacent_positions)
 
-#벽에 붙어있지 않은 빈 공간에 상자를 위치
+# 벽에 붙어있지 않은 빈 공간에 상자를 위치
 def place_boxes(map_data, goals):
     global goal_count
     
@@ -115,42 +116,58 @@ def draw_level(map_data):
                 screen.blit(box_image, (x * tile_size, y * tile_size))
             elif tile == BOX_ON_GOAL:
                 screen.blit(box_on_goal_image, (x * tile_size, y * tile_size))
-                
-#화면에 플레이어를 표시함
+
+# 화면에 플레이어를 표시함
 def draw_player():
     screen.blit(player_image, (player_pos[0] * tile_size, player_pos[1] * tile_size))
-    
-#플레이어의 이동을 정의
+
+# 플레이어의 이동을 정의
 def move_player(dx, dy):
     global level
     global goal_count
+    global undo_stack  # 추가
+    
     new_x = player_pos[0] + dx
     new_y = player_pos[1] + dy
-    
-    if level[new_y][new_x] == " ":
-        # player가 있던 자리 공백으로 변환
-        level[player_pos[1]][player_pos[0]] = " "
-        #player 이동
-        player_pos[0] = new_x
-        player_pos[1] = new_y
-        level[player_pos[1]][player_pos[0]] = "@"
-    elif level[new_y][new_x] == '$':
-        box_new_x = new_x + dx
-        box_new_y = new_y + dy
-        if level[box_new_y][box_new_x] in " .":
-            level[new_y][new_x] = ' '
+
+    if level[new_y][new_x] in " $":  # 이동 가능 여부 확인
+        # 이전 상태 저장
+        undo_stack.append((player_pos[:], [row[:] for row in level], goal_count))  # 추가
+        
+        if level[new_y][new_x] == " ":
+            # player가 있던 자리 공백으로 변환
             level[player_pos[1]][player_pos[0]] = " "
+            # player 이동
             player_pos[0] = new_x
             player_pos[1] = new_y
             level[player_pos[1]][player_pos[0]] = "@"
-            # 상자 이동
-            if level[box_new_y][box_new_x] == " ":
-                level[box_new_y][box_new_x] = '$'
-            elif level[box_new_y][box_new_x] == ".":
-                level[box_new_y][box_new_x] = '*'
-                goal_count -= 1
+        elif level[new_y][new_x] == '$':
+            box_new_x = new_x + dx
+            box_new_y = new_y + dy
+            if level[box_new_y][box_new_x] in " .":
+                level[new_y][new_x] = ' '
+                level[player_pos[1]][player_pos[0]] = " "
+                player_pos[0] = new_x
+                player_pos[1] = new_y
+                level[player_pos[1]][player_pos[0]] = "@"
+                # 상자 이동
+                if level[box_new_y][box_new_x] == " ":
+                    level[box_new_y][box_new_x] = '$'
+                elif level[box_new_y][box_new_x] == ".":
+                    level[box_new_y][box_new_x] = '*'
+                    goal_count -= 1
 
-#플레이어가 이겼는지 판단함
+# 이전 상태로 되돌리기
+def undo_move():  # 추가
+    global player_pos
+    global level
+    global goal_count
+    global undo_stack
+
+    if undo_stack:
+        player_pos, level, goal_count = undo_stack.pop()
+
+# 플레이어가 이겼는지 판단함
 def is_win():
     global goal_count
     if goal_count == 0:
@@ -161,33 +178,34 @@ def is_win():
         pygame.time.wait(2000)  # 2초간 대기
         reset_game()  # 게임 초기화 함수 호출
 
-#새로운 맵을 생성하여 게임 리셋
+# 새로운 맵을 생성하여 게임 리셋
 def reset_game():
-    global level, player_pos
+    global level, player_pos, undo_stack  # 추가
     level, player_pos = generate_sokoban_map(10, 10, 3)
+    undo_stack.clear()  # 추가
 
-#시작 메뉴를 표시
+# 시작 메뉴를 표시
 def show_menu():
     font = pygame.font.SysFont(None, 50)
-    text = ["Press Enter To Start Game","To See How To Play, Press H"]
+    text = ["Press Enter To Start Game", "To See How To Play, Press H"]
     label = []
     position = [screen_width // 2 - 200, screen_height // 2 - 50]
     for line in text:
         label.append(font.render(line, True, (255, 0, 0)))
     for line in range(len(label)):
-        screen.blit(label[line],(position[0],position[1]+(line*50)+(15*line)))
+        screen.blit(label[line], (position[0], position[1] + (line * 50) + (15 * line)))
     pygame.display.flip()
 
-#조작 방법등을 표시
+# 조작 방법등을 표시
 def show_controls():
     font = pygame.font.SysFont(None, 32)
-    text = ["                                                              Sokoban Rules","1. Objective: Push all the boxes into the holes.", "2. How to play: You can move player character using arrow keys.", "3. Winning Condition: Fill all the holes with boxes to win.", "4. New Map: A new map will be generated automatically a few seconds after you win.", "                                              To return to main menu, Press 'Esc'"]
+    text = ["                                                              Sokoban Rules", "1. Objective: Push all the boxes into the holes.", "2. How to play: You can move player character using arrow keys.", "3. Winning Condition: Fill all the holes with boxes to win.", "4. New Map: A new map will be generated automatically a few seconds after you win.", "                                              To return to main menu, Press 'Esc'"]
     label = []
     position = [screen_width // 2 - 460, screen_height // 2 - 250]
     for line in text:
         label.append(font.render(line, True, (255, 0, 0)))
     for line in range(len(label)):
-        screen.blit(label[line],(position[0],position[1]+(line*50)+(15*line)))
+        screen.blit(label[line], (position[0], position[1] + (line * 50) + (15 * line)))
     pygame.display.flip()
 
 # 메인 루프
@@ -208,10 +226,10 @@ def run():
                         game_state = STATE_CONTROLS
                 elif game_state == STATE_CONTROLS:
                     if event.key == pygame.K_ESCAPE:  # ESC 키를 눌러 메뉴로 돌아감
-                        game_state = STATE_MENU
+                        game_state = STATE_MENU  # 추가
                 elif game_state == STATE_GAME:
                     if event.key == pygame.K_ESCAPE:  # ESC 키를 눌러 메뉴로 돌아감
-                        game_state = STATE_MENU
+                        game_state = STATE_MENU  # 추가
                     elif event.key == pygame.K_UP:
                         move_player(0, -1)
                         is_win()
@@ -224,6 +242,8 @@ def run():
                     elif event.key == pygame.K_RIGHT:
                         move_player(1, 0)
                         is_win()
+                    elif event.key == pygame.K_z:  # Z 키를 눌러 되돌리기
+                        undo_move()  # 추가
 
         screen.fill(WHITE)
         if game_state == STATE_MENU:
