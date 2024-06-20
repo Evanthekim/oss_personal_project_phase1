@@ -34,6 +34,7 @@ BOX = '$'
 GOAL = '.'
 BOX_ON_GOAL = '*'
 PLAYER_ON_GOAL = '+'
+OBSTACLE = 'O'  # 추가2
 
 # 방향 벡터
 DIRS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -94,13 +95,27 @@ def place_boxes(map_data, goals):
     
     return map_data
 
+# 무작위 장애물 추가
+def place_obstacles(map_data, num_obstacles):  # 추가2
+    free_spaces = [(y, x) for y, row in enumerate(map_data) for x, tile in enumerate(row) if tile == FLOOR]
+    random.shuffle(free_spaces)
+
+    for _ in range(num_obstacles):
+        if not free_spaces:
+            break
+        obstacle_pos = free_spaces.pop()
+        map_data[obstacle_pos[0]][obstacle_pos[1]] = OBSTACLE
+    
+    return map_data
+
 # 맵을 자동으로 생성함
-def generate_sokoban_map(width, height, num_goals):
+def generate_sokoban_map(width, height, num_goals, num_obstacles=5):  # 추가2
     global player_pos
     while True:
         map_data = create_empty_map(width, height)
         player_pos, goals = place_player_and_goals(map_data, num_goals)
         map_data = place_boxes(map_data, goals)
+        map_data = place_obstacles(map_data, num_obstacles)  # 추가2
         return map_data, player_pos
 
 # 화면에 레벨을 표시함
@@ -116,6 +131,8 @@ def draw_level(map_data):
                 screen.blit(box_image, (x * tile_size, y * tile_size))
             elif tile == BOX_ON_GOAL:
                 screen.blit(box_on_goal_image, (x * tile_size, y * tile_size))
+            elif tile == OBSTACLE:  # 추가2
+                screen.blit(wall_image, (x * tile_size, y * tile_size))  # 임시로 wall_image 사용
 
 # 화면에 플레이어를 표시함
 def draw_player():
@@ -220,7 +237,7 @@ def run():
             elif event.type == pygame.KEYDOWN:
                 if game_state == STATE_MENU:
                     if event.key == pygame.K_RETURN:  # Enter 키를 눌러 게임 시작
-                        level, player_pos = generate_sokoban_map(10, 10, 3)
+                        level, player_pos = generate_sokoban_map(10, 10, 3, 5)  # 추가2
                         game_state = STATE_GAME
                     elif event.key == pygame.K_h:  # H 키를 눌러 조작법 안내
                         game_state = STATE_CONTROLS
@@ -257,6 +274,5 @@ def run():
 
     pygame.quit()
     sys.exit()
-
 if __name__ == "__main__":
     run()
