@@ -190,7 +190,7 @@ def move_player(player, dx, dy):
     global level
     global goal_count
     global undo_stack
-
+#################PHASE2#################
     if player == 1:
         new_x = player1_pos[0] + dx
         new_y = player1_pos[1] + dy
@@ -201,12 +201,13 @@ def move_player(player, dx, dy):
         new_y = player2_pos[1] + dy
         current_pos = player2_pos
         player_char = PLAYER2
-
+#################PHASE2#################
     if any(obstacle.pos == (new_x, new_y) for obstacle in moving_obstacles):
         return
-
+#################PHASE2#################
     if level[new_y][new_x] in " $":
         undo_stack.append((player1_pos[:], player2_pos[:], [row[:] for row in level], goal_count))
+#################PHASE2#################
 
         if level[new_y][new_x] == " ":
             level[current_pos[1]][current_pos[0]] = " "
