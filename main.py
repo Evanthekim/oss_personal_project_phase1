@@ -63,7 +63,7 @@ def place_player_and_goals(map_data, num_goals):
     temp_pos = list(free_spaces.pop())
     player_pos[0] = temp_pos[0]
     player_pos[1] = temp_pos[1]
-    map_data[player_pos[0]][player_pos[1]] = PLAYER
+    map_data[player_pos[1]][player_pos[0]] = PLAYER
 
     # 목표 지점 선정
     goals = []
