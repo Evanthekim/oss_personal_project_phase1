@@ -3,6 +3,8 @@ import sys
 import random
 from collections import deque
 
+from map import generate_sokoban_map
+
 # Pygame 초기화
 pygame.init()
 
@@ -51,6 +53,7 @@ goal_count = 0
 
 # 플레이어 움직임 저장
 move = []
+
 
 #비어있는 맵을 생성
 def create_empty_map(width, height):
